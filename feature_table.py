@@ -1,15 +1,24 @@
 # -*-coding:utf-8-*-
 import math
+import sys
+sys.path.append(r'F:\Work\MODE\Submit')   #导入的函数路径
+import data_pre_PA1
 
 
 def feature_table(x, fudge=1e-08, hits_random=None, correct_negatives=None, fA=0.05):
     out = {}
-    m = x["unmatched"]["matches"]
-    hits = m.shape[0]
+    #m = x["unmatched"]["matches"]
+    #hits = m.shape[0]
+    m = x["matches"]
+    hits = m['X'].shape[0]
     miss = get_length(x['unmatched']['X'])
     fa = get_length(x['unmatched']['Xhat'])
-    No = x['Xlabeled'].max()
-    Nf = x['Ylabeled'].max()
+    #No = x['Xlabeled'].max()
+    #Nf = x['Ylabeled'].max()
+    Xfeats = data_pre_PA1.pick_labels(x['Xlabelsfeature'])
+    Yfeats = data_pre_PA1.pick_labels(x['Ylabelsfeature'])
+    No = len(Xfeats)
+    Nf = len(Yfeats)
     if correct_negatives is None:
         bigD = (1 - fA) * No / fA - Nf
         if bigD < 0:
@@ -26,18 +35,18 @@ def feature_table(x, fudge=1e-08, hits_random=None, correct_negatives=None, fA=0
     denom = Nf + miss - hits_random
     if denom == 0:
         denom = fudge
-    GSS = (hits - hits_random) / denom    #Gilbert skill score (aka Equitable Threat Score, ETS评分)
+    GSS = (hits - hits_random) / denom
     s = (hits + miss) / bigD
-    POD = hits / (hits + miss + fudge)    #平均命中率（Probability of Detection，POD）
+    POD = hits / (hits + miss + fudge)
     SH2 = POD * (1 - POD) / (hits + miss + fudge)
     POD_se = math.sqrt(SH2)
     FArate = fa / (fa + bigD)
     SF2 = FArate * (1 - FArate) / (fa + bigD)
     FArate_se = math.sqrt(SF2)
-    FAR = fa / (hits + fa + fudge)    #平均空报比率（False Alarm Ratio，FAR）
+    FAR = fa / (hits + fa + fudge)
     FAR_se = math.sqrt(
         (FAR ** 4) * ((1 - POD) / (hits + fudge) + (1 - POD) / (fa + fudge)) * (hits ** 2 / (fa ** 2 + fudge)))
-    HSS = 2 * (hits * bigD - fa * miss) / ((hits + miss) * (miss + bigD) + (hits + fa) * (fa + bigD) + fudge)    #Heidke skill score
+    HSS = 2 * (hits * bigD - fa * miss) / ((hits + miss) * (miss + bigD) + (hits + fa) * (fa + bigD) + fudge)
     SHSS2 = SF2 * (HSS ** 2) * (1 / (POD - FArate + fudge) + (1 - s) * (1 - 2 * s)) ** 2 + SH2 * (HSS ** 2) * (
             1 / (POD - FArate + fudge) - s * (1 - 2 * s)) ** 2
     HSS_se = math.sqrt(SHSS2)
@@ -56,7 +65,7 @@ def feature_table(x, fudge=1e-08, hits_random=None, correct_negatives=None, fA=0
 def get_length(x):
     data_type = type(x).__name__
     # 此处应该将调用方法中的‘None’改为None
-    if data_type == "str" and x == 'None':
+    if data_type == "str" and x == 'NULL':
         return 0
     elif data_type == "int" or data_type == "float":
         return 1
@@ -65,3 +74,8 @@ def get_length(x):
     else:
         print("传入类型错误")
         raise Exception("传入类型错误")
+'''
+#data = np.load(r'F:\Work\MODE\tra_test\FeatureFinder\deltammResult_PA3.npy', allow_pickle = True).tolist()
+data = look_deltamm.copy()
+look_feature_table = feature_table(data)
+'''
